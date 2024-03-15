@@ -1,4 +1,4 @@
-use std::net::SocketAddr;
+use std::sync::Arc;
 
 use jsonrpsee::{
     core::{async_trait, RpcResult},
@@ -7,6 +7,10 @@ use jsonrpsee::{
     types::ErrorObject,
 };
 use runtime::{Dispatchable, RuntimeCall, UpperCall};
+use tokio::{
+    sync::{oneshot, Mutex},
+    task::JoinHandle,
+};
 pub enum Error {
     DecodeError,
     RuntimeError,
@@ -39,19 +43,52 @@ trait RuntimeAPI {
     }
 }
 
-#[derive(Default)]
-pub struct RpcServer;
+pub struct RpcServer {
+    shutdown_tx: oneshot::Sender<()>,
+    shutdown_rx: Arc<Mutex<Option<oneshot::Receiver<()>>>>,
+}
+
+impl Default for RpcServer {
+    fn default() -> Self {
+        let (shutdown_tx, shutdown_rx) = oneshot::channel();
+        Self {
+            shutdown_tx,
+            shutdown_rx: Arc::new(Mutex::new(Some(shutdown_rx))),
+        }
+    }
+}
 
 #[async_trait]
 impl RuntimeAPIServer for RpcServer {}
 impl RpcServer {
-    pub async fn serve() -> Result<(tokio::task::JoinHandle<()>, SocketAddr), std::io::Error> {
-        let server = Server::builder().build("127.0.0.1:0").await?;
+    pub fn new() -> Self {
+        Self::default()
+    }
 
-        let addr = server.local_addr()?;
+    pub async fn serve(&self) -> Result<JoinHandle<()>, std::io::Error> {
+        let server = Server::builder().build("127.0.0.1:3000").await?;
+
+        // let addr = server.local_addr()?;
         let handle = server.start(RpcServer::default().into_rpc());
 
-        let task = tokio::spawn(handle.stopped());
-        Ok((task, addr))
+        let shutdown_rx = self.shutdown_rx.lock().await.take().unwrap();
+
+        let task = tokio::spawn(async move {
+            tokio::select! {
+                _ = handle.clone().stopped() => {
+                    println!("Server stopped.");
+                }
+                _ = shutdown_rx => {
+                    println!("Received shutdown signal. Stopping server...");
+                    handle.stop().unwrap();
+                }
+            }
+        });
+
+        Ok(task)
+    }
+
+    pub async fn shutdown(self) {
+        self.shutdown_tx.send(()).unwrap();
     }
 }
