@@ -1,4 +1,6 @@
-use support::traits::{DispatchResult, Dispatchable};
+pub use rtm_upper::Call as UpperCall;
+use support::traits::DispatchResult;
+pub use support::traits::Dispatchable;
 
 pub struct Runtime;
 
