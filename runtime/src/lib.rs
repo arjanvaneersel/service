@@ -1,26 +1,33 @@
-pub use rtm_upper::Call as UpperCall;
+pub use rtm_greeter::{Call as GreeterCall, CallResponse as GreeterResponse};
 use support::traits::DispatchResult;
 pub use support::traits::Dispatchable;
 
+#[derive(Debug, PartialEq)]
 pub struct Runtime;
 
-impl rtm_upper::Config for Runtime {
+impl rtm_greeter::Config for Runtime {
     const RTM_ID: &'static str = "RTM_UPPER";
 
     type Origin = String;
-    type Input = String;
 }
 
+#[derive(Debug, PartialEq)]
 pub enum RuntimeCall {
-    BusinessLogic(rtm_upper::Call<Runtime>),
+    Greeter(GreeterCall<Runtime>),
+}
+
+#[derive(Debug, PartialEq)]
+pub enum RuntimeResponse {
+    Greeter(GreeterResponse<Runtime>),
 }
 
 impl Dispatchable for RuntimeCall {
-    type Origin = <Runtime as rtm_upper::Config>::Origin;
+    type Origin = <Runtime as rtm_greeter::Config>::Origin;
+    type Response = RuntimeResponse;
 
-    fn dispatch(self, origin: Self::Origin) -> DispatchResult {
+    fn dispatch(self, origin: Self::Origin) -> DispatchResult<Self::Response> {
         match self {
-            RuntimeCall::BusinessLogic(element) => element.dispatch(origin),
+            RuntimeCall::Greeter(call) => Ok(RuntimeResponse::Greeter(call.dispatch(origin)?)),
         }
     }
 }
@@ -31,8 +38,14 @@ mod tests {
 
     #[test]
     fn it_works() {
-        let result = RuntimeCall::BusinessLogic(rtm_upper::Call::Capitalize("hello".into()))
-            .dispatch(String::new());
-        assert!(result.is_ok());
+        let result = RuntimeCall::Greeter(rtm_greeter::Call::Greet("Luna".into()))
+            .dispatch(String::new())
+            .unwrap();
+        assert_eq!(
+            result,
+            RuntimeResponse::Greeter(GreeterResponse::<Runtime>::Greet(String::from(
+                "Hello, Luna!"
+            )))
+        );
     }
 }

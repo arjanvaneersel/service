@@ -1,16 +1,16 @@
-use std::sync::Arc;
-
 use jsonrpsee::{
     core::{async_trait, RpcResult},
     proc_macros::rpc,
     server::Server,
     types::ErrorObject,
 };
-use runtime::{Dispatchable, RuntimeCall, UpperCall};
+use runtime::{Dispatchable, GreeterCall, RuntimeCall};
+use std::sync::Arc;
 use tokio::{
     sync::{oneshot, Mutex},
     task::JoinHandle,
 };
+
 pub enum Error {
     DecodeError,
     RuntimeError,
@@ -30,7 +30,7 @@ impl From<Error> for i32 {
 trait RuntimeAPI {
     #[method(name = "upper_capitalize")]
     async fn upper_capitalize(&self, input: String) -> RpcResult<()> {
-        RuntimeCall::BusinessLogic(UpperCall::Capitalize(input.into()))
+        RuntimeCall::Greeter(GreeterCall::Greet(input.into()))
             .dispatch(String::new())
             .map_err(|err| {
                 ErrorObject::owned(

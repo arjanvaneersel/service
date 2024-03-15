@@ -1,26 +1,31 @@
 use support::traits::{DispatchError, DispatchResult, Dispatchable};
 
-use crate::to_upper::ToUpper;
-
 pub trait Config {
     /// The identifier of this element.
     const RTM_ID: &'static str;
 
     type Origin: Clone;
-    type Input: Clone + ToUpper;
 }
 
-pub trait BusinessLogic {
-    type Origin;
-    type Input;
-
-    fn capitalize(origin: Self::Origin, input: Self::Input) -> DispatchResult;
+pub trait Greeter<T: Config> {
+    fn greet(_origin: T::Origin, _name: String) -> DispatchResult<CallResponse<T>>;
 }
 
+#[derive(Debug, PartialEq)]
 pub enum Call<T: Config> {
-    Capitalize(T::Input),
+    Greet(String),
+    #[allow(non_camel_case_types)]
+    __marker(std::marker::PhantomData<T>),
 }
 
+#[derive(Debug, PartialEq)]
+pub enum CallResponse<T: Config> {
+    Greet(String),
+    #[allow(non_camel_case_types)]
+    __marker(std::marker::PhantomData<T>),
+}
+
+#[allow(non_camel_case_types)]
 pub enum Error<T: Config> {
     Unknown,
     #[allow(non_camel_case_types)]
@@ -55,27 +60,26 @@ impl<T: Config> From<Error<T>> for DispatchError {
 
 pub struct RTM<T: Config>(std::marker::PhantomData<T>);
 impl<T: Config> RTM<T> {
-    fn capitalize(_origin: T::Origin, input: T::Input) -> DispatchResult {
-        println!("{}", input.as_uppercase());
-        Ok(())
+    fn greet(_origin: T::Origin, name: String) -> DispatchResult<CallResponse<T>> {
+        let answer = format!("Hello, {}!", name);
+        Ok(CallResponse::Greet(answer))
     }
 }
 
 impl<T: Config> Dispatchable for Call<T> {
     type Origin = T::Origin;
+    type Response = CallResponse<T>;
 
-    fn dispatch(self, origin: T::Origin) -> DispatchResult {
+    fn dispatch(self, origin: T::Origin) -> DispatchResult<Self::Response> {
         match self {
-            Call::Capitalize(input) => RTM::<T>::capitalize(origin, input),
+            Call::Greet(input) => RTM::<T>::greet(origin, input),
+            Call::__marker(_) => unreachable!("__marker should never be printed"),
         }
     }
 }
 
-impl<T: Config> BusinessLogic for RTM<T> {
-    type Origin = T::Origin;
-    type Input = T::Input;
-
-    fn capitalize(origin: Self::Origin, input: Self::Input) -> DispatchResult {
-        RTM::<T>::capitalize(origin, input)
+impl<T: Config> Greeter<T> for RTM<T> {
+    fn greet(origin: T::Origin, name: String) -> DispatchResult<CallResponse<T>> {
+        RTM::<T>::greet(origin, name)
     }
 }

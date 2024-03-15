@@ -12,7 +12,7 @@ repository = "https://github.com/arjanvaneersel/service-rs"
 resolver = "2"
 members = [
     "app",
-    "business/rtm-upper",
+    "business/rtm-greeter",
     "runtime",
     "storage",
     "support",
@@ -30,7 +30,7 @@ tokio = { version = "1.36.0", features = [
 ] }
 
 # Project dependencies
-rtm-upper = { path = "./business/rtm-upper" }
+rtm-greeter = { path = "./business/rtm-greeter" }
 runtime = { path = "./runtime" }
 storage = { path = "./storage" }
 support = { path = "./support" }

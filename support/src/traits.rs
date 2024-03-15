@@ -30,10 +30,11 @@ impl std::fmt::Display for DispatchError {
 
 impl std::error::Error for DispatchError {}
 
-pub type DispatchResult = Result<(), DispatchError>;
+pub type DispatchResult<T> = Result<T, DispatchError>;
 
 pub trait Dispatchable {
     type Origin;
+    type Response;
 
-    fn dispatch(self, origin: Self::Origin) -> DispatchResult;
+    fn dispatch(self, origin: Self::Origin) -> DispatchResult<Self::Response>;
 }

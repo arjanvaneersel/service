@@ -1,7 +1,5 @@
 pub mod rtm;
-mod to_upper;
-
-pub use rtm::{Call, Config};
+pub use rtm::{Call, CallResponse, Config};
 
 // #[cfg(test)]
 // mod tests {
