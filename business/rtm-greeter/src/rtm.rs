@@ -8,7 +8,32 @@ pub trait Config {
 }
 
 pub trait Greeter<T: Config> {
-    fn greet(_origin: T::Origin, _name: String) -> DispatchResult<CallResponse<T>>;
+    fn greet(_origin: T::Origin, _name: String) -> DispatchResult<GreetResponse<T>>;
+}
+
+#[derive(Debug, PartialEq)]
+pub struct GreetResponse<T>(String, std::marker::PhantomData<T>);
+impl<T: Config> GreetResponse<T> {
+    pub fn new(input: String) -> GreetResponse<T> {
+        GreetResponse(input, std::marker::PhantomData)
+    }
+}
+
+#[derive(Debug, PartialEq)]
+pub struct GreetCall<T:Config>(String, std::marker::PhantomData<T>);
+impl<T:Config> GreetCall<T> {
+    pub fn new(input: String) -> GreetCall<T> {
+        GreetCall(input, std::marker::PhantomData)
+    }
+}
+
+impl<T: Config> Dispatchable for GreetCall<T> {
+    type Origin = T::Origin;
+    type Response = GreetResponse<T>;
+
+    fn dispatch(self, origin: Self::Origin) -> DispatchResult<Self::Response> {
+        RTM::<T>::greet(origin, self.0)
+    }
 }
 
 #[derive(Debug, PartialEq)]
@@ -60,26 +85,9 @@ impl<T: Config> From<Error<T>> for DispatchError {
 
 pub struct RTM<T: Config>(std::marker::PhantomData<T>);
 impl<T: Config> RTM<T> {
-    fn greet(_origin: T::Origin, name: String) -> DispatchResult<CallResponse<T>> {
+    fn greet(_origin: T::Origin, name: String) -> DispatchResult<GreetResponse<T>> {
         let answer = format!("Hello, {}!", name);
-        Ok(CallResponse::Greet(answer))
-    }
-}
-
-impl<T: Config> Dispatchable for Call<T> {
-    type Origin = T::Origin;
-    type Response = CallResponse<T>;
-
-    fn dispatch(self, origin: T::Origin) -> DispatchResult<Self::Response> {
-        match self {
-            Call::Greet(input) => RTM::<T>::greet(origin, input),
-            Call::__marker(_) => unreachable!("__marker should never be printed"),
-        }
-    }
-}
-
-impl<T: Config> Greeter<T> for RTM<T> {
-    fn greet(origin: T::Origin, name: String) -> DispatchResult<CallResponse<T>> {
-        RTM::<T>::greet(origin, name)
+        // Ok(CallResponse::Greet(answer))
+        Ok(GreetResponse::new(answer))
     }
 }

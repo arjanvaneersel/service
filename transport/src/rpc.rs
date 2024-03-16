@@ -4,7 +4,7 @@ use jsonrpsee::{
     server::Server,
     types::ErrorObject,
 };
-use runtime::{Dispatchable, GreeterCall, RuntimeCall};
+use runtime::{Dispatchable, GreeterGreetCall};
 use std::sync::Arc;
 use tokio::{
     sync::{oneshot, Mutex},
@@ -30,7 +30,7 @@ impl From<Error> for i32 {
 trait RuntimeAPI {
     #[method(name = "upper_capitalize")]
     async fn upper_capitalize(&self, input: String) -> RpcResult<()> {
-        RuntimeCall::Greeter(GreeterCall::Greet(input.into()))
+        GreeterGreetCall::new(input)
             .dispatch(String::new())
             .map_err(|err| {
                 ErrorObject::owned(

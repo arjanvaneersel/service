@@ -1,5 +1,4 @@
-pub use rtm_greeter::{Call as GreeterCall, CallResponse as GreeterResponse};
-use support::traits::DispatchResult;
+pub use rtm_greeter::{GreetCall, GreetResponse};
 pub use support::traits::Dispatchable;
 
 #[derive(Debug, PartialEq)]
@@ -11,26 +10,8 @@ impl rtm_greeter::Config for Runtime {
     type Origin = String;
 }
 
-#[derive(Debug, PartialEq)]
-pub enum RuntimeCall {
-    Greeter(GreeterCall<Runtime>),
-}
-
-#[derive(Debug, PartialEq)]
-pub enum RuntimeResponse {
-    Greeter(GreeterResponse<Runtime>),
-}
-
-impl Dispatchable for RuntimeCall {
-    type Origin = <Runtime as rtm_greeter::Config>::Origin;
-    type Response = RuntimeResponse;
-
-    fn dispatch(self, origin: Self::Origin) -> DispatchResult<Self::Response> {
-        match self {
-            RuntimeCall::Greeter(call) => Ok(RuntimeResponse::Greeter(call.dispatch(origin)?)),
-        }
-    }
-}
+pub type GreeterGreetCall = GreetCall<Runtime>;
+pub type GreeterGreetResponse = GreetResponse<Runtime>;
 
 #[cfg(test)]
 mod tests {
@@ -38,14 +19,10 @@ mod tests {
 
     #[test]
     fn it_works() {
-        let result = RuntimeCall::Greeter(rtm_greeter::Call::Greet("Luna".into()))
-            .dispatch(String::new())
-            .unwrap();
+        let result = GreeterGreetCall::new("Luna".into()).dispatch(String::new()).unwrap();
         assert_eq!(
             result,
-            RuntimeResponse::Greeter(GreeterResponse::<Runtime>::Greet(String::from(
-                "Hello, Luna!"
-            )))
+            GreeterGreetResponse::new("Hello Luna!".into())
         );
     }
 }

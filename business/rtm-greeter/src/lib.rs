@@ -1,5 +1,5 @@
 pub mod rtm;
-pub use rtm::{Call, CallResponse, Config};
+pub use rtm::{GreetCall, GreetResponse, Config};
 
 // #[cfg(test)]
 // mod tests {
