@@ -31,7 +31,7 @@ trait RuntimeAPI {
     #[method(name = "upper_capitalize")]
     async fn upper_capitalize(&self, input: String) -> RpcResult<()> {
         GreeterGreetCall::new(input)
-            .dispatch(String::new())
+            .dispatch(())
             .map_err(|err| {
                 ErrorObject::owned(
                     Error::RuntimeError.into(),

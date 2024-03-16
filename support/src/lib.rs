@@ -1,4 +1,8 @@
+pub mod origin;
 pub mod traits;
+
+pub use traits::Config;
+
 
 // #[cfg(test)]
 // mod tests {
