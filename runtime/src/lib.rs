@@ -1,36 +1,33 @@
-pub use rtm_greeter::{Call as GreeterCall, CallResponse as GreeterResponse};
-use support::traits::DispatchResult;
+pub use rtm_greeter::{GreetCall, GreetResponse};
+use support::traits::ConstUSize;
 pub use support::traits::Dispatchable;
 
 #[derive(Debug, PartialEq)]
+/// Composite element for runtime modules.
 pub struct Runtime;
 
+// Every Config of runtime modules use support::Config as its base implementation,
+// therefore Runtime should implement it, as it will be used as the value for generics
+// of calls.
+impl support::Config for Runtime {
+    type Origin = ();
+}
+
+// Implement the Config trait of each runtime module that will be enabled for the runtime.
+
+// Enable rtm_greeter by implementing the Config trait.
 impl rtm_greeter::Config for Runtime {
     const RTM_ID: &'static str = "RTM_UPPER";
 
-    type Origin = String;
+    /// Type holding the number of times "hello" shall be repeated in the response.
+    type Times = ConstUSize<3>;
 }
 
-#[derive(Debug, PartialEq)]
-pub enum RuntimeCall {
-    Greeter(GreeterCall<Runtime>),
-}
+/// Alias for easier composing of GreetCalls.
+pub type GreeterGreetCall = GreetCall<Runtime>;
 
-#[derive(Debug, PartialEq)]
-pub enum RuntimeResponse {
-    Greeter(GreeterResponse<Runtime>),
-}
-
-impl Dispatchable for RuntimeCall {
-    type Origin = <Runtime as rtm_greeter::Config>::Origin;
-    type Response = RuntimeResponse;
-
-    fn dispatch(self, origin: Self::Origin) -> DispatchResult<Self::Response> {
-        match self {
-            RuntimeCall::Greeter(call) => Ok(RuntimeResponse::Greeter(call.dispatch(origin)?)),
-        }
-    }
-}
+/// Alias for easier compising of GreetResponse.
+pub type GreeterGreetResponse = GreetResponse<Runtime>;
 
 #[cfg(test)]
 mod tests {
@@ -38,14 +35,10 @@ mod tests {
 
     #[test]
     fn runtime_works() {
-        let result = RuntimeCall::Greeter(rtm_greeter::Call::Greet("Luna".into()))
-            .dispatch(String::new())
-            .unwrap();
+        let result = GreeterGreetCall::new("Luna".into()).dispatch(()).unwrap();
         assert_eq!(
             result,
-            RuntimeResponse::Greeter(GreeterResponse::<Runtime>::Greet(String::from(
-                "Hello, Luna!"
-            )))
+            GreeterGreetResponse::new("Hello, hello, hello, Luna!".into())
         );
     }
 }
