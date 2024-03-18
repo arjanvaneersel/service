@@ -19,7 +19,6 @@ impl support::Config for Runtime {
 impl rtm_greeter::Config for Runtime {
     const RTM_ID: &'static str = "RTM_UPPER";
 
-    /// Type holding the number of times "hello" shall be repeated in the response.
     type Times = ConstUSize<3>;
 }
 
