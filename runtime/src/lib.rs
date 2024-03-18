@@ -37,7 +37,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn it_works() {
+    fn runtime_works() {
         let result = RuntimeCall::Greeter(rtm_greeter::Call::Greet("Luna".into()))
             .dispatch(String::new())
             .unwrap();
